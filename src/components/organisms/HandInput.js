@@ -1,7 +1,9 @@
 import { Box, Paper, Stack, Typography } from '@mui/material';
 import React, { useState } from 'react';
+import { analyzeMentsu } from '../../utils/yaku/helpers';
 import MahjongTile from '../atoms/MahjongTile';
 import DoraDisplay from '../molecules/DoraDisplay';
+import SpecialWinModal, { SPECIAL_WINS } from '../molecules/SpecialWinModal';
 import TileSelectModal from '../molecules/TileSelectModal';
 import WindSelector from '../molecules/WindSelector';
 
@@ -16,6 +18,7 @@ import WindSelector from '../molecules/WindSelector';
  * @param {boolean} props.isRiichi - リーチ状態
  * @param {boolean} props.isTsumo - ツモ和了フラグ
  * @param {Object} props.winningTile - 和了牌
+ * @param {Object} props.specialWins - 特別上がりの状態
  * @param {function} props.onUpdate - 状態更新時のコールバック
  */
 const HandInput = ({
@@ -27,21 +30,56 @@ const HandInput = ({
     isRiichi = false,
     isTsumo = false,
     winningTile = null,
+    specialWins = {},
     onUpdate
 }) => {
     // モーダルの表示状態
     const [isHandModalOpen, setIsHandModalOpen] = useState(false);
     const [isWinningTileModalOpen, setIsWinningTileModalOpen] = useState(false);
+    const [isSpecialWinModalOpen, setIsSpecialWinModalOpen] = useState(false);
+
+    // 手牌の解析結果をキャッシュ
+    const [analyzedTiles, setAnalyzedTiles] = useState([]);
 
     // 手牌の更新（13枚まで）
     const handleHandTilesUpdate = (newTiles) => {
-        onUpdate({ ...getCurrentState(), handTiles: newTiles });
+        // 手牌が更新されたら面子解析を行う
+        let newAnalyzedTiles = [];
+        if (newTiles.length === 13 && winningTile) {
+            // 14枚揃った状態で面子解析
+            newAnalyzedTiles = analyzeMentsu([...newTiles, winningTile]);
+            setAnalyzedTiles(newAnalyzedTiles);
+        }
+
+        onUpdate({
+            ...getCurrentState(),
+            handTiles: newTiles,
+            analyzedTiles: newAnalyzedTiles
+        });
     };
 
     // 上がり牌の更新
     const handleWinningTileSelect = (newTiles) => {
-        onUpdate({ ...getCurrentState(), winningTile: newTiles[0] || null });
+        const newWinningTile = newTiles[0] || null;
+
+        // 手牌が13枚あり、上がり牌も選択された場合に面子解析
+        let newAnalyzedTiles = [];
+        if (handTiles.length === 13 && newWinningTile) {
+            newAnalyzedTiles = analyzeMentsu([...handTiles, newWinningTile]);
+            setAnalyzedTiles(newAnalyzedTiles);
+        }
+
+        onUpdate({
+            ...getCurrentState(),
+            winningTile: newWinningTile,
+            analyzedTiles: newAnalyzedTiles
+        });
         setIsWinningTileModalOpen(false);
+    };
+
+    // 特別上がりの更新
+    const handleSpecialWinsUpdate = (newSpecialWins) => {
+        onUpdate({ ...getCurrentState(), specialWins: newSpecialWins });
     };
 
     // ドラ表示牌の更新
@@ -73,7 +111,8 @@ const HandInput = ({
         onUpdate({
             ...getCurrentState(),
             isTsumo: !isTsumo,
-            winningTile: null // ツモ/ロン切り替え時に上がり牌をリセット
+            winningTile: null, // ツモ/ロン切り替え時に上がり牌をリセット
+            analyzedTiles: [] // 面子解析結果もリセット
         });
     };
 
@@ -86,7 +125,9 @@ const HandInput = ({
         roundWind,
         isRiichi,
         isTsumo,
-        winningTile
+        winningTile,
+        analyzedTiles,
+        specialWins
     });
 
     // 手牌をクリア
@@ -99,7 +140,9 @@ const HandInput = ({
             roundWind,
             isRiichi: false,
             isTsumo: false,
-            winningTile: null
+            winningTile: null,
+            analyzedTiles: [],
+            specialWins: {}
         });
     };
 
@@ -157,6 +200,14 @@ const HandInput = ({
         </Stack>
     );
 
+    // 選択された特別上がりを表示用にフォーマット
+    const getSelectedSpecialWins = () => {
+        return SPECIAL_WINS
+            .filter(win => specialWins[win.id])
+            .map(win => win.name)
+            .join('、');
+    };
+
     return (
         <Box sx={{ p: 2 }}>
             <Paper elevation={3} sx={{ p: 2, mb: 2 }}>
@@ -184,6 +235,36 @@ const HandInput = ({
                     onUradoraTileSelect={handleUradoraTileSelect}
                     onRiichiChange={handleRiichiChange}
                 />
+
+                {/* 特別上がり表示エリア */}
+                <Box sx={{ my: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                        特別上がり
+                    </Typography>
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            p: 2,
+                            minHeight: '60px',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                            alignItems: 'center',
+                            cursor: 'pointer'
+                        }}
+                        onClick={() => setIsSpecialWinModalOpen(true)}
+                    >
+                        {Object.keys(specialWins).some(id => specialWins[id]) ? (
+                            <Typography>
+                                {getSelectedSpecialWins()}
+                            </Typography>
+                        ) : (
+                            <Typography color="text.secondary">
+                                クリックして特別上がりを選択してください
+                            </Typography>
+                        )}
+                    </Paper>
+                </Box>
 
                 {/* 手牌表示エリア */}
                 <Box sx={{ my: 2 }}>
@@ -267,6 +348,14 @@ const HandInput = ({
                 maxTiles={1}
                 title={`${isTsumo ? "ツモ" : "ロン"}牌を選択`}
                 allowMultiple={false}
+            />
+
+            {/* 特別上がり選択モーダル */}
+            <SpecialWinModal
+                open={isSpecialWinModalOpen}
+                onClose={() => setIsSpecialWinModalOpen(false)}
+                selectedWins={specialWins}
+                onUpdate={handleSpecialWinsUpdate}
             />
         </Box>
     );

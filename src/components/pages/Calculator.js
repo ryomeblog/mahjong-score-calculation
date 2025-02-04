@@ -17,7 +17,9 @@ const Calculator = () => {
         seatWind: 1,           // 自風
         roundWind: 1,          // 場風
         isRiichi: false,       // リーチ状態
-        isTsumo: false         // ツモあがりフラグ
+        isTsumo: false,        // ツモあがりフラグ
+        analyzedTiles: [],      // 面子解析済みの手牌
+        specialWins: {}         // 特別上がりの状態
     });
 
     // 点数計算結果を管理
@@ -30,21 +32,23 @@ const Calculator = () => {
 
         // 手牌が揃っている場合（13枚＋上がり牌）のみ点数計算を行う
         if (newState.handTiles.length === 13 && newState.winningTile) {
-            // 計算用に14枚の手牌を作成（手牌＋上がり牌）
-            const fullHandTiles = [...newState.handTiles];
-            if (newState.winningTile) {
-                fullHandTiles.push(newState.winningTile);
-            }
-
-            // 点数を計算
+            // 点数を計算（面子解析済みの手牌を使用）
             const result = calculateHandScore({
-                handTiles: fullHandTiles,
+                handTiles: newState.analyzedTiles,
                 isRiichi: newState.isRiichi,
                 isTsumo: newState.isTsumo,
                 seatWind: newState.seatWind,
                 roundWind: newState.roundWind,
                 doraTiles: newState.doraTiles || [],
-                uradoraTiles: newState.uradoraTiles || []
+                uradoraTiles: newState.uradoraTiles || [],
+                // 特別上がり情報を追加
+                isIppatsu: newState.specialWins?.isIppatsu || false,
+                isChankan: newState.specialWins?.isChankan || false,
+                isRinshan: newState.specialWins?.isRinshan || false,
+                isHoutei: newState.specialWins?.isHoutei || false,
+                isHaitei: newState.specialWins?.isHaitei || false,
+                isChihou: newState.specialWins?.isChihou || false,
+                isTenhou: newState.specialWins?.isTenhou || false
             });
 
             setScoreResult(result);

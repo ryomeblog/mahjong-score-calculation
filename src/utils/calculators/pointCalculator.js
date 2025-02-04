@@ -91,7 +91,11 @@ export const calculateFu = (handTiles, isTsumo, isMenzen) => {
     }
 
     // 平和形の場合
-    if (handTiles.some(tile => tile.isPinfu)) {
+    const isPinfu = handTiles.every(tile =>
+        tile.isJantou || tile.isShuntsu
+    ) && handTiles.some(tile => tile.isRyanmen);
+
+    if (isPinfu) {
         if (isTsumo) {
             return 20;
         }
@@ -102,11 +106,6 @@ export const calculateFu = (handTiles, isTsumo, isMenzen) => {
 
     // ツモ符（門前のみ）
     if (isTsumo && isMenzen) {
-        fu += 2;
-    }
-
-    // 待ち牌による符（ペンチャン、カンチャン、単騎待ちは2符）
-    if (handTiles.some(tile => tile.isEdgeWait)) {
         fu += 2;
     }
 
@@ -128,14 +127,14 @@ export const calculateFu = (handTiles, isTsumo, isMenzen) => {
     });
 
     // 雀頭の符
-    const jantouTile = handTiles.find(t => t.isJantou);
-    if (jantouTile) {
+    const jantou = handTiles.find(tile => tile.isJantou);
+    if (jantou) {
         // 役牌の場合2符
-        if (jantouTile.isYakuhai) {
+        if (jantou.isYakuhai) {
             fu += 2;
         }
         // 連風牌の場合4符
-        if (jantouTile.isDoubleWinds) {
+        if (jantou.isDoubleWinds) {
             fu += 4;
         }
     }
