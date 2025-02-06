@@ -43,26 +43,34 @@ export const calculateBasePoints = (han, fu) => {
  * @param {number} basePoints - 基本点
  * @param {boolean} isTsumo - ツモ和了かどうか
  * @param {boolean} isDealer - 親かどうか
+ * @param {number} honba - 本場数
  * @returns {Object} 点数情報
  */
-export const calculateFinalScore = (basePoints, isTsumo, isDealer) => {
+export const calculateFinalScore = (basePoints, isTsumo, isDealer, honba = 0) => {
     const points = Math.ceil(basePoints / 100) * 100;  // 100点単位に切り上げ
+    const honbaPoints = honba * 300;  // 1本場につき300点
 
     if (isTsumo) {
         if (isDealer) {
             // 親のツモ: 全員から2倍
+            const paymentFromEach = points * 2;
             return {
                 points,
-                paymentFromEach: points * 2,
-                total: points * 6  // 2点 × 3人
+                honbaPoints,
+                paymentFromEach: paymentFromEach,
+                paymentFromEachWithHonba: paymentFromEach + honbaPoints,
+                total: (points * 6) + (honbaPoints * 3)  // 2点 × 3人 + 本場分
             };
         } else {
             // 子のツモ: 親から2倍、子から1倍
             return {
                 points,
+                honbaPoints,
                 paymentFromDealer: points * 2,
                 paymentFromOthers: points,
-                total: points * 4  // 親2点 + 子1点 × 2人
+                paymentFromDealerWithHonba: (points * 2) + honbaPoints,
+                paymentFromOthersWithHonba: points + honbaPoints,
+                total: (points * 4) + (honbaPoints * 3)  // 親2点 + 子1点 × 2人 + 本場分
             };
         }
     } else {
@@ -70,7 +78,8 @@ export const calculateFinalScore = (basePoints, isTsumo, isDealer) => {
         const ronPoints = points * (isDealer ? 6 : 4);
         return {
             points,
-            total: ronPoints
+            honbaPoints,
+            total: ronPoints + (honbaPoints * (isDealer ? 3 : 1))  // 本場分を加算
         };
     }
 };

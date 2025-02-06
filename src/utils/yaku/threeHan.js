@@ -17,12 +17,6 @@ const isSameShuntsu = (shuntsu1, shuntsu2) => {
     );
 };
 
-// 端牌（1,9）または字牌かどうかを判定
-const isYaochuhai = (tile) => {
-    if (tile.suit === SUIT_TYPES.JIHAI) return true;
-    return tile.number === 1 || tile.number === 9;
-};
-
 // 手牌からすべての構成牌を取得
 const getAllTiles = (handTiles) => {
     const allTiles = [];
@@ -153,7 +147,7 @@ const isHoniso = (handTiles) => {
  * @param {Object} conditions - 和了条件
  * @returns {Array} 成立した役のリスト
  */
-export const checkThreeHanYaku = (handTiles, conditions) => {
+export const checkThreeHanYaku = (handTiles, _conditions) => {
     const yakuList = [];
 
     // 門前限定役

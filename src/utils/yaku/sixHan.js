@@ -54,7 +54,7 @@ const isChinitsu = (handTiles) => {
  * @param {Object} conditions - 和了条件
  * @returns {Array} 成立した役のリスト
  */
-export const checkSixHanYaku = (handTiles, conditions) => {
+export const checkSixHanYaku = (handTiles, _conditions) => {
     const yakuList = [];
 
     // 清一色（喰い下り有り）

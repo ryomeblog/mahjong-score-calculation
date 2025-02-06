@@ -193,6 +193,4 @@ describe('One Han Yaku Tests', () => {
             expect(result).not.toContainEqual({ name: '平和', han: 1 });
         });
     });
-
-    // 他の1翻役のテスト...
 });

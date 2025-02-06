@@ -11,11 +11,6 @@ const countKantsu = (handTiles) => {
     return handTiles.filter(tile => tile.isKantsu).length;
 };
 
-// 刻子の数を数える（暗刻+明刻）
-const countKoutsu = (handTiles) => {
-    return handTiles.filter(tile => tile.isKoutsu).length;
-};
-
 // 風牌の刻子の数を数える
 const countWindKoutsu = (handTiles) => {
     return handTiles.filter(tile =>

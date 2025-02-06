@@ -10,7 +10,7 @@ import ScoreDisplay from '../organisms/ScoreDisplay';
 const Calculator = () => {
     // 手牌の状態を管理
     const [handState, setHandState] = useState({
-        handTiles: [],          // 手牌（13枚）
+        handTiles: [],          // 手牌
         winningTile: null,      // 上がり牌
         doraTiles: [],          // ドラ表示牌
         uradoraTiles: [],       // 裏ドラ表示牌
@@ -19,7 +19,8 @@ const Calculator = () => {
         isRiichi: false,       // リーチ状態
         isTsumo: false,        // ツモあがりフラグ
         analyzedTiles: [],      // 面子解析済みの手牌
-        specialWins: {}         // 特別上がりの状態
+        specialWins: {},        // 特別上がりの状態
+        calledTiles: []         // 鳴き牌
     });
 
     // 点数計算結果を管理
@@ -30,11 +31,24 @@ const Calculator = () => {
         // 状態を更新
         setHandState(newState);
 
-        // 手牌が揃っている場合（13枚＋上がり牌）のみ点数計算を行う
-        if (newState.handTiles.length === 13 && newState.winningTile) {
-            // 点数を計算（面子解析済みの手牌を使用）
+        // 手牌が揃っている場合のみ点数計算を行う
+        const calledTilesCount = (newState.calledTiles || []).reduce((acc, tile) =>
+            acc + (tile.type === 'kan' ? 4 : 3), 0);
+        const handTilesCount = newState.handTiles.length;
+        const totalTiles = handTilesCount + calledTilesCount;
+
+        console.log('Tile counts:', {
+            handTiles: handTilesCount,
+            calledTiles: calledTilesCount,
+            total: totalTiles
+        });
+
+        // 手牌と鳴き牌の合計が13枚で上がり牌があるときのみ点数計算
+        if (totalTiles === 13 && newState.winningTile) {
+            // 点数を計算（面子解析済みの手牌と鳴き牌を使用）
             const result = calculateHandScore({
                 handTiles: newState.analyzedTiles,
+                calledTiles: newState.calledTiles || [], // 鳴き牌の情報を追加
                 isRiichi: newState.isRiichi,
                 isTsumo: newState.isTsumo,
                 seatWind: newState.seatWind,
@@ -48,7 +62,13 @@ const Calculator = () => {
                 isHoutei: newState.specialWins?.isHoutei || false,
                 isHaitei: newState.specialWins?.isHaitei || false,
                 isChihou: newState.specialWins?.isChihou || false,
-                isTenhou: newState.specialWins?.isTenhou || false
+                isTenhou: newState.specialWins?.isTenhou || false,
+                // デバッグ情報
+                debug: {
+                    handTilesCount: newState.handTiles.length,
+                    calledTilesCount: calledTilesCount,
+                    totalTiles: totalTiles
+                }
             });
 
             setScoreResult(result);
